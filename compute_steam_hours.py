@@ -1,6 +1,6 @@
 # /// script
 # requires-python = ">=3.13"
-# dependencies = ["requests", "python-dotenv", "htpy"]
+# dependencies = ["requests", "htpy"]
 # ///
 
 import os
@@ -12,17 +12,15 @@ import itertools
 from dataclasses import dataclass
 from typing import Dict
 
-import dotenv
 import requests
 from htpy import html, head, meta, title, body, h1, h2, li, ul
 
 
-dotenv.load_dotenv()
 STEAM_ID = os.environ['STEAM_ID']
 API_KEY = os.environ['API_KEY']
 OUTPUT_FILE = os.environ['OUTPUT_FILE']
 
-con = sqlite3.connect('data.sqlite', autocommit=True)
+con = sqlite3.connect(Path(__file__).parent / 'data.sqlite', autocommit=True)
 cur = con.cursor()
 games_dict: Dict[int, str] = None
 
@@ -153,6 +151,8 @@ def generate_report(stats):
 
     with open(OUTPUT_FILE, 'w') as fp:
         fp.write(str(layout(content())))
+
+    print(f'Generated report to {OUTPUT_FILE}')
 
 
 def show_minutes(minutes : int):
