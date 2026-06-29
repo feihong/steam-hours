@@ -107,16 +107,17 @@ def get_gameplay_stats():
             date,
             minutes,
             -- Gets the very next chronological date for this specific game
-            LEAD(date) OVER (PARTITION BY game_id ORDER BY date) AS next_date,
-            LEAD(minutes) OVER (PARTITION BY game_id ORDER BY date) AS next_minutes
+            LEAD(date) OVER win AS next_date,
+            LEAD(minutes) OVER win AS next_minutes
         FROM gameplay
+        WINDOW win AS (PARTITION BY game_id ORDER BY date)
     )
     SELECT
         next_date AS date,
         game_id,
         next_minutes - minutes AS minutes_played
     FROM RankedGameplay
-    WHERE next_date >= ? AND next_date <= ?;
+    WHERE next_date BETWEEN ? AND ?;
     ''', (start_date.toordinal(), end_date.toordinal()))
 
     def generate():
@@ -166,9 +167,20 @@ def show_minutes(minutes : int):
 
 def cleanup():
     """
-    Clean up gameplay rows older than a month
+    Delete gameplay rows older than a month, but leave the last row for a game no matter how old
     """
-    pass
+    month_ago = datetime.date.today() - datetime.timedelta(days=30)
+
+    cur.execute('''
+    DELETE FROM gameplay
+    WHERE date < ?
+      AND EXISTS (
+            SELECT 1
+            FROM gameplay g2
+            WHERE gameplay.game_id = g2.game_id
+            AND g2.date > gameplay.date
+          );
+    ''', (month_ago.toordinal(),))
 
 
 if __name__ == '__main__':
