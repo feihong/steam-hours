@@ -129,7 +129,7 @@ def get_gameplay_stats():
 def layout(content):
     title_text = 'Steam Gameplay Report'
 
-    return html(
+    return html[
         head[
             meta(charset='utf-8'),
             title[title_text],
@@ -138,20 +138,30 @@ def layout(content):
             h1[title_text],
             *content,
         ]
-    )
+    ]
 
 
 def generate_report(stats):
-    # def content():
-    #     pass
+    def content():
+        for date, plays in stats:
+            yield h2[date.strftime('%B %d, %Y')]
 
-    # with open(OUTPUT_FILE, 'w') as fp:
-    #     fp.write(layout(content()))
+            yield ul[
+                [li[f'{play.name}: {show_minutes(play.minutes)}'] for play in plays]
+            ]
 
-    for date, plays in stats:
-        print(date)
-        for p in plays:
-            print(p)
+    with open(OUTPUT_FILE, 'w') as fp:
+        fp.write(str(layout(content())))
+
+
+def show_minutes(minutes : int):
+    """
+    Convert minutes to string with H:MM format
+    """
+    td = datetime.timedelta(minutes=minutes)
+    hours, remainder = divmod(td.total_seconds(), 3600)
+    minutes = remainder // 60
+    return f'{hours:.0f}:{minutes:02.0f}'
 
 
 def cleanup():
