@@ -13,7 +13,7 @@ from dataclasses import dataclass
 from typing import Dict
 
 import requests
-from htpy import html, head, meta, title, body, h1, h2, li, ul
+from htpy import html, head, meta, title, body, h1, h2, ul, li, a as anchor
 
 
 STEAM_ID = os.environ['STEAM_ID']
@@ -29,13 +29,14 @@ games_dict: Dict[int, str] = None
 class Gameplay:
     date: datetime.date
     name: str
+    game_id: int
     minutes: int # minutes played on that date
 
     @staticmethod
     def from_row(date_ordinal, game_id, minutes):
         date = datetime.date.fromordinal(date_ordinal)
         name = games_dict[game_id]
-        return Gameplay(date, name, minutes)
+        return Gameplay(date, name, game_id, minutes)
 
 
 def main():
@@ -67,7 +68,7 @@ def setup():
         date    INTEGER,
         minutes INTEGER, -- total minutes played
         FOREIGN KEY(game_id) REFERENCES game(appid),
-        UNIQUE(game_id, date)
+        UNIQUE(game_id, minutes)
     );
     ''')
 
@@ -85,7 +86,7 @@ def update(games):
 
         cur.execute('''
         INSERT INTO gameplay (game_id, date, minutes) VALUES (?, ?, ?)
-        ON CONFLICT (game_id, date) DO UPDATE SET minutes=excluded.minutes;
+        ON CONFLICT (game_id, minutes) DO NOTHING;
         ''', (appid, today.toordinal(), game['playtime_forever']))
 
 
@@ -141,13 +142,20 @@ def layout(content):
 
 
 def generate_report(stats):
+    def item(play):
+        return li[
+            anchor(href=f'https://store.steampowered.com/app/{play.game_id}')[
+                play.name
+            ],
+            ': ',
+            show_minutes(play.minutes),
+        ]
+
     def content():
         for date, plays in stats:
             yield h2[date.strftime('%B %d, %Y')]
 
-            yield ul[
-                [li[f'{play.name}: {show_minutes(play.minutes)}'] for play in plays]
-            ]
+            yield ul[[item(play) for play in plays]]
 
     with open(OUTPUT_FILE, 'w') as fp:
         fp.write(str(layout(content())))

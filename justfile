@@ -1,6 +1,6 @@
 set dotenv-load := true
 
-compute:
+generate:
     uv run --env-file .env compute_steam_hours.py
 
 deploy:
