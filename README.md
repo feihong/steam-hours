@@ -5,7 +5,9 @@
 ```
 STEAM_ID=123456789
 API_KEY=ABCDEFGHIJKLMNOPQRSTUVWXYZ
-OUTPUT_FILE=~/work/steam-hours/output.html
+OUTPUT_DIR=/home/me/steamhours
+
+SERVER=myserver.com
 ```
 
 ## Tables
@@ -96,9 +98,9 @@ WHERE next_date >= ? AND next_date <= ?;
 ## Set up cron job
 
 1. Create `~/opt/steamhours/.env` on your server
-1. `just deploy`
+1. `just first_deploy` (use `just deploy` for subsequent deploys)
 1. `chmod u+v ~/opt/steamhours/run.sh`
-1. Edit the `OUTPUT_FILE` value inside `.env` to generate your report inside a published web directory
+1. Edit the `OUTPUT_DIR` value inside `.env` to generate your report inside a published web directory
 1. `crontab -e`
 1. Add line `@hourly /home/me/opt/steamhours/run.sh`
 1. `crontab -l` to see your jobs

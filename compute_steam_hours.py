@@ -18,8 +18,9 @@ from htpy import html, head, meta, title, body, h1, h2, ul, li, a as anchor
 
 STEAM_ID = os.environ['STEAM_ID']
 API_KEY = os.environ['API_KEY']
-OUTPUT_FILE = os.environ['OUTPUT_FILE']
+OUTPUT_DIR = os.environ['OUTPUT_DIR']
 
+output_file = Path(OUTPUT_DIR) / 'index.html'
 con = sqlite3.connect(Path(__file__).parent / 'data.sqlite', autocommit=True)
 cur = con.cursor()
 games_dict: Dict[int, str] = None
@@ -158,10 +159,10 @@ def generate_report(stats):
 
             yield ul[[item(play) for play in plays]]
 
-    with open(OUTPUT_FILE, 'w') as fp:
+    with open(output_file, 'w') as fp:
         fp.write(str(layout(content())))
 
-    print(f'Generated report to {OUTPUT_FILE}')
+    print(f'Generated report to {output_file}')
 
 
 def show_minutes(minutes : int):
