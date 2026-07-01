@@ -42,17 +42,10 @@ class Gameplay:
 
 def main():
     setup()
-
-    url = 'https://api.steampowered.com/IPlayerService/GetRecentlyPlayedGames/v0001/'
-    response = requests.get(f'{url}?key={API_KEY}&steamid={STEAM_ID}&format=json')
-    games = response.json()['response']['games']
+    games = pull()
     update(games)
-
-    global games_dict
-    games_dict = get_games_dict()
     stats = get_gameplay_stats()
     generate_report(stats)
-
     cleanup()
 
 
@@ -69,9 +62,18 @@ def setup():
         date    INTEGER,
         minutes INTEGER, -- total minutes played
         FOREIGN KEY(game_id) REFERENCES game(appid),
-        UNIQUE(game_id, minutes)
+        UNIQUE(game_id, date)
     );
     ''')
+
+
+def pull():
+    url = 'https://api.steampowered.com/IPlayerService/GetRecentlyPlayedGames/v0001/'
+    response = requests.get(f'{url}?key={API_KEY}&steamid={STEAM_ID}&format=json')
+    games = response.json()['response']['games']
+    for game in games:
+        print(f'{game['appid']} {game['name']}: {game['playtime_forever']}')
+    return games
 
 
 def update(games):
@@ -87,8 +89,12 @@ def update(games):
 
         cur.execute('''
         INSERT INTO gameplay (game_id, date, minutes) VALUES (?, ?, ?)
-        ON CONFLICT (game_id, minutes) DO NOTHING;
+        ON CONFLICT (game_id, date) DO UPDATE SET minutes = excluded.minutes;
         ''', (appid, today.toordinal(), game['playtime_forever']))
+
+    global games_dict
+    games_dict = get_games_dict()
+
 
 
 def get_games_dict():
