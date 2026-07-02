@@ -123,7 +123,8 @@ def get_gameplay_stats():
         game_id,
         next_minutes - minutes AS minutes_played
     FROM RankedGameplay
-    WHERE next_date BETWEEN ? AND ?;
+    WHERE next_date BETWEEN ? AND ?
+    ORDER BY next_date DESC;
     ''', (start_date.toordinal(), end_date.toordinal()))
 
     def generate():
@@ -163,7 +164,7 @@ def generate_report(stats):
         for date, plays in stats:
             yield h2[date.strftime('%B %d, %Y')]
 
-            yield ul[[item(play) for play in plays]]
+            yield ul[[item(play) for play in plays if play.minutes > 0]]
 
     with open(output_file, 'w') as fp:
         fp.write(str(layout(content())))
